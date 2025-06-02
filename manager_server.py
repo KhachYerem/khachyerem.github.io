@@ -2,7 +2,6 @@ from flask import Flask, request, render_template_string, redirect, url_for, ses
 from flask_cors import CORS
 import requests
 
-
 app = Flask(__name__)
 CORS(app)
 app.secret_key = 'your_secret_key_here'
@@ -21,21 +20,21 @@ LOGIN_TEMPLATE = '''
         body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-box { border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
         .form-group { margin-bottom: 15px; }
-        input { padding: 5px; width: 265px;   padding: 12px 16px; border: 1px solid #ccd1d5; border-radius: 4px; font-size: 16px; color: #364b66; background-color: white; transition: border-color 0.3s ease; margin-bottom: 15px }
+        input { padding: 12px 16px; border: 1px solid #ccd1d5; border-radius: 4px; font-size: 16px; color: #364b66; background-color: white; transition: border-color 0.3s ease; margin-bottom: 15px; width: 265px; }
         button { padding: 5px 10px; cursor: pointer; font-size: 18px; font-weight: bold; border: 1px solid #2862AC; color: #2862AC; border-radius: 4px; height: 48px; width: 100%; transition: background-color 0.3s ease; background-color: #ffffff; }
         label { color: #7c7c7d; font-size: 14px; }
-        button:hover{ background-color: #2862AC; color: #ffffff; }
-        h2{ margin-left: 14px; }
+        button:hover { background-color: #2862AC; color: #ffffff; }
+        h2 { margin-left: 14px; }
     </style>
 </head>
 <body>
-    <div className="login-box">
+    <div class="login-box">
         <h2>Вход для менеджеров</h2>
         {% if error %}
             <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form method="POST" action="/login">
-            <div className="form-group">
+            <div class="form-group">
                 <label>Логин:</label><br>
                 <input type="text" name="username" required>
             </div>
@@ -59,34 +58,46 @@ REQUESTS_TEMPLATE = '''
     <title>Менеджер запросов</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; justify-content: space-between; }
+        .requests-section { width: 45%; }
+        .chat-section { width: 45%; }
         .request { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
         .chat-message { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
         .buttons { margin-top: 10px; }
-        button { padding: 5px 10px; margin-right: 10px; cursor: pointer; }
+        button { padding: 5px 10px; margin-right: 10px; cursor: pointer; font-size: 18px; font-weight: bold; border: 1px solid #2862AC; color: #2862AC; border-radius: 4px; height: 43px; width: 100%; transition: background-color 0.3s ease; background-color: #ffffff; }
+        button:hover { background-color: #2862AC; color: #ffffff; }
         .accepted { background-color: #d4edda; }
         .rejected { background-color: #f8d7da; }
         .logout { margin-top: 20px; }
         .chat-input { display: flex; gap: 10px; margin-top: 10px; }
-        input { padding: 5px; width: 265px;   padding: 12px 16px; border: 1px solid #ccd1d5; border-radius: 4px; font-size: 16px; color: #364b66; background-color: white; transition: border-color 0.3s ease; margin-bottom: 15px } }
-        .chat-input button { padding: 5px 10px; }
-        button { padding: 5px 10px; cursor: pointer; font-size: 18px; font-weight: bold; border: 1px solid #2862AC; color: #2862AC; border-radius: 4px; height: 43px; width: 330px; transition: background-color 0.3s ease; background-color: #ffffff; }   
-        button:hover{ background-color: #2862AC; color: #ffffff; }
-
-        
+        input { padding: 12px 16px; border: 1px solid #ccd1d5; border-radius: 4px; font-size: 16px; color: #364b66; background-color: white; transition: border-color 0.3s ease; margin-bottom: 15px; width: 265px; }
+        .chat-input button { padding: 5px 10px; width: auto; }
+        .chat-section { display: block; }
+        .chat-item { cursor: pointer; padding: 5px; border-bottom: 1px solid #ddd; }
+        .chat-item:hover { background-color: #f0f0f0; }
     </style>
 </head>
 <body>
-    <h1>Список запросов</h1>
-    <div id="requests"></div>
-    <h1>Чат с пользователями</h1>
-    <div id="chat"></div>
-    <div className="logout">
+    <div class="container">
+        <div class="requests-section">
+            <h1>Список запросов</h1>
+            <div id="requests"></div>
+        </div>
+        <div class="chat-section">
+            <h1>Чат с пользователями</h1>
+            <div id="chat-list"></div>
+            <div id="chat-content" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+    <div class="logout">
         <button onclick="window.location.href='/logout'">Выйти</button>
     </div>
 
     <script>
+        let currentUserId = null;
+
         async function loadRequests() {
-            const response = await fetch('http://localhost:5000/requests');
+            const response = await fetch('http://localhost:5000/requests'); // Замените на ваш домен при переносе
             const requests = await response.json();
             const container = document.getElementById('requests');
             container.innerHTML = '';
@@ -95,7 +106,6 @@ REQUESTS_TEMPLATE = '''
                 const div = document.createElement('div');
                 div.className = `request ${req.status}`;
                 div.innerHTML = `<strong>Запрос №${index + 1}</strong><br>
-                    Страна: ${req.country === 'RF' ? 'РФ' : 'Беларусь'}<br>
                     ФИО: ${req.fullName}<br>
                     Email: ${req.email}<br>
                     Гражданство: ${req.citizenship}<br>
@@ -105,44 +115,63 @@ REQUESTS_TEMPLATE = '''
                     Пол: ${req.gender || 'Не указан'}<br>
                     Дата рождения: ${req.dob}<br>
                     Время отправки: ${req.timestamp}<br>
+                    User ID: ${req.userId}<br>
                     Статус: ${req.status === 'pending' ? 'Ожидает' : req.status === 'accept' ? 'Принят' : 'Отклонён'}<br>
-                    <div className="buttons">
-                        <button onclick="handleAction('${req.id}', 'accept')">Принять</button>
+                    <div class="buttons">
+                        <button onclick="handleAction('${req.id}', 'accept', '${req.userId}')">Принять</button>
                         <button onclick="handleAction('${req.id}', 'reject')">Отклонить</button>
                     </div>`;
                 container.appendChild(div);
             });
         }
 
-        async function loadMessages() {
-            const response = await fetch('http://localhost:5000/messages');
+        async function loadChatList() {
+            const response = await fetch('http://localhost:5000/messages'); // Замените на ваш домен при переносе
             const messages = await response.json();
-            const container = document.getElementById('chat');
-            container.innerHTML = '';
-            messages.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'chat-message';
-                div.innerHTML = `
-                    <strong>${msg.sender === 'user' ? 'Пользователь' : 'Менеджер'}</strong><br>
-                    Сообщение: ${msg.text}<br>
-                    Время: ${msg.timestamp}<br>
-                    ${msg.sender === 'user' ? `
-                    <div className="chat-input">
-                        <input type="text" id="reply-${msg.id}" placeholder="Введите ответ...">
-                        <button onclick="sendReply('${msg.id}')">Отправить</button>
-                    </div>` : ''}
-                `;
-                container.appendChild(div);
+            const userIds = [...new Set(messages.map(msg => msg.userId))];
+            const chatList = document.getElementById('chat-list');
+            chatList.innerHTML = '';
+            userIds.forEach(userId => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                chatItem.innerHTML = `Пользователь (User ID: ${userId})`;
+                chatItem.onclick = () => loadChat(userId);
+                chatList.appendChild(chatItem);
             });
         }
 
-        async function handleAction(requestId, action) {
-            await fetch(`http://localhost:5000/action/${requestId}/${action}`, { method: 'POST' });
+        async function loadChat(userId) {
+            currentUserId = userId;
+            const response = await fetch(`http://localhost:5000/messages?userId=${userId}`); // Замените на ваш домен при переносе
+            const messages = await response.json();
+            const chatContent = document.getElementById('chat-content');
+            chatContent.innerHTML = `
+                <h2>Чат с пользователем (User ID: ${userId})</h2>
+                <div id="messages-${userId}"></div>
+                <div class="chat-input">
+                    <input type="text" id="reply-${userId}" placeholder="Введите ответ...">
+                    <button onclick="sendReply('${userId}')">Отправить</button>
+                </div>`;
+            const messagesDiv = document.getElementById(`messages-${userId}`);
+            messagesDiv.innerHTML = messages.length > 0 ? messages.map(msg => `
+                <div class="chat-message">
+                    <strong>${msg.sender === 'user' ? 'Пользователь' : 'Менеджер'}</strong><br>
+                    Сообщение: ${msg.text}<br>
+                    Время: ${msg.timestamp}
+                </div>
+            `).join('') : '<p>Сообщений пока нет.</p>';
+        }
+
+        async function handleAction(requestId, action, userId) {
+            await fetch(`http://localhost:5000/action/${requestId}/${action}`, { method: 'POST' }); // Замените на ваш домен при переносе
+            if (action === 'accept') {
+                loadChat(userId);
+            }
             loadRequests();
         }
 
-        async function sendReply(messageId) {
-            const replyInput = document.getElementById(`reply-${messageId}`);
+        async function sendReply(userId) {
+            const replyInput = document.getElementById(`reply-${userId}`);
             const replyText = replyInput.value;
             if (!replyText.trim()) return;
 
@@ -156,22 +185,26 @@ REQUESTS_TEMPLATE = '''
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
-                }).replace(',', '')
+                }).replace(',', ''),
+                userId
             };
 
-            await fetch('http://localhost:5000/send_message', {
+            await fetch('http://localhost:5000/send_message', { // Замените на ваш домен при переносе
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(message)
             });
             replyInput.value = '';
-            loadMessages();
+            loadChat(userId);
         }
 
         loadRequests();
-        loadMessages();
-        setInterval(loadRequests, 10000);
-        setInterval(loadMessages, 5000);
+        loadChatList();
+        setInterval(() => {
+            loadRequests();
+            if (currentUserId) loadChat(currentUserId);
+            loadChatList();
+        }, 5000);
     </script>
 </body>
 </html>

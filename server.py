@@ -6,12 +6,12 @@ import json
 import uuid
 
 app = Flask(__name__)
+# Для локального тестирования разрешаем запросы с localhost
+# При переносе на хостинг замените на ваш домен, например: "https://yourdomain.com"
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://localhost:5001"]}})
-
 
 REQUESTS_FILE = 'requests.json'
 MESSAGES_FILE = 'messages.json'
-
 
 if not os.path.exists(REQUESTS_FILE):
     with open(REQUESTS_FILE, 'w', encoding='utf-8') as f:
@@ -40,6 +40,7 @@ def write_messages(messages):
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.get_json()
+    userId = data.get('userId')
     data_string = (
         f"ФИО: {data.get('fullName', '')}\n"
         f"Email: {data.get('email', '')}\n"
@@ -51,6 +52,7 @@ def submit():
         f"Дата рождения: {data.get('dob', '')}\n"
         f"Время отправки: {data.get('timestamp', '')}\n"
         f"Страна: {data.get('country', 'Не указана')}\n"
+        f"User ID: {userId}\n"
         f"------------------------\n"
     )
 
@@ -70,7 +72,8 @@ def submit():
         'dob': data.get('dob', ''),
         'timestamp': data.get('timestamp', ''),
         'status': 'pending',
-        'country': data.get('country', 'Не указана')
+        'country': data.get('country', 'Не указана'),
+        'userId': userId
     }
     requests = read_requests()
     requests.append(request_data)
@@ -104,7 +107,7 @@ def handle_action(request_id, action):
             req['status'] = action
             email = req['email']
             gender = req.get('gender', '').lower()
-            status_text = "принята" if action == 'accept' else "нет"
+            status_text = "принята" if action == 'accept' else "отклонена"
             if gender == 'male' and action == 'accept':
                 status_text = "принят"
             message = f"Ваш запрос: {status_text}.\nПодробности: {req['fullName']}, {req['timestamp']}"
@@ -125,7 +128,11 @@ def handle_action(request_id, action):
 
 @app.route('/messages', methods=['GET'])
 def get_messages():
-    return jsonify(read_messages())
+    userId = request.args.get('userId')
+    messages = read_messages()
+    if userId:
+        return jsonify([msg for msg in messages if msg.get('userId') == userId])
+    return jsonify(messages)
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
