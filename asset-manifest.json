@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.9bc84d94.css",
-    "main.js": "/static/js/main.9667bc2d.js",
+    "main.css": "/static/css/main.cff91d62.css",
+    "main.js": "/static/js/main.2b5dd7aa.js",
     "static/media/spravka.png": "/static/media/spravka.a833cb1216bd620699af.png",
     "static/media/report.pdf": "/static/media/report.2245faa009eca8f2d204.pdf",
     "index.html": "/index.html",
-    "main.9bc84d94.css.map": "/static/css/main.9bc84d94.css.map",
-    "main.9667bc2d.js.map": "/static/js/main.9667bc2d.js.map"
+    "main.cff91d62.css.map": "/static/css/main.cff91d62.css.map",
+    "main.2b5dd7aa.js.map": "/static/js/main.2b5dd7aa.js.map"
   },
   "entrypoints": [
-    "static/css/main.9bc84d94.css",
-    "static/js/main.9667bc2d.js"
+    "static/css/main.cff91d62.css",
+    "static/js/main.2b5dd7aa.js"
   ]
 }
