@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import a1 from "./assets/documents/report.pdf";
 import a2 from "./assets/images/spravka.png";
-import { v4 as uuidv4 } from 'uuid'; // Установите: npm install uuid
 
 const StepCard = ({ number, text }) => {
   return (
@@ -242,7 +241,7 @@ function StepTwoForm({ onValidChange, onDataChange }) {
   );
 }
 
-function StepThreeForm({ fullName, dob, stepTwoData, onBack, gender, onConfirm }) {
+function StepThreeForm({ fullName, dob, stepTwoData, onBack, gender }) {
   const [operatorId] = useState('2426025');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -265,7 +264,7 @@ function StepThreeForm({ fullName, dob, stepTwoData, onBack, gender, onConfirm }
     setEmailError(error);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const error = validateEmail(email);
     if (error) {
       setEmailError(error);
@@ -298,7 +297,21 @@ function StepThreeForm({ fullName, dob, stepTwoData, onBack, gender, onConfirm }
       country: "RF"
     };
 
-    onConfirm(formData);
+    try {
+      const response = await fetch('https://khachyerem-github-io-4.onrender.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const result = await response.json();
+      if (result.message) {
+        alert(`Проверка завершена. Отчет будет отправлен на вашу электронную почту: ${email}`);
+      } else {
+        alert('Ошибка при отправке запроса: ' + result.error);
+      }
+    } catch (error) {
+      alert('Ошибка сети: ' + error.message);
+    }
   };
 
   return (
@@ -347,18 +360,15 @@ function Main() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isStepTwoValid, setIsStepTwoValid] = useState(false);
   const [formData, setFormData] = useState({ fullName: '', dob: '', gender: '', stepTwoData: {} });
-  const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [showChat, setShowChat] = useState(false); 
+  const [messages, setMessages] = useState([]); 
   const [newMessage, setNewMessage] = useState('');
-  const [userId] = useState(uuidv4()); // Уникальный ID для каждого пользователя
 
-  // Для локального тестирования используем http://localhost:5000
-  // При переносе на хостинг замените на ваш домен, например: https://yourdomain.com/api
   useEffect(() => {
     if (showChat) {
       const fetchMessages = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/messages?userId=${userId}`);
+          const response = await fetch('https://khachyerem-github-io-4.onrender.com/messages');
           const data = await response.json();
           setMessages(data);
         } catch (error) {
@@ -366,10 +376,11 @@ function Main() {
         }
       };
       fetchMessages();
+
       const interval = setInterval(fetchMessages, 5000);
       return () => clearInterval(interval);
     }
-  }, [showChat, userId]);
+  }, [showChat]);
 
   const handleCookieAccept = () => {
     setShowCookieNotice(false);
@@ -407,13 +418,11 @@ function Main() {
         minute: '2-digit',
         timeZone: 'Asia/Yekaterinburg'
       }).replace(',', ''),
-      userId
+      userId: formData.userId || str(uuid.uuid4()) // Добавляем userId, если отсутствует
     };
 
     try {
-      // Для локального тестирования используем http://localhost:5000
-      // При переносе на хостинг замените на ваш домен, например: https://yourdomain.com/api
-      await fetch('http://localhost:5000/send_message', {
+      await fetch('https://khachyerem-github-io-4.onrender.com/send_message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(message)
@@ -425,32 +434,11 @@ function Main() {
     }
   };
 
-  const handleConfirm = async (formData) => {
-    const submitData = { ...formData, userId };
-    try {
-      // Для локального тестирования используем http://localhost:5000
-      // При переносе на хостинг замените на ваш домен, например: https://yourdomain.com/api
-      const response = await fetch('http://localhost:5000/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData)
-      });
-      const result = await response.json();
-      if (result.message) {
-        alert(`Проверка завершена. Отчет будет отправлен на вашу электронную почту: ${submitData.email}`);
-      } else {
-        alert('Ошибка при отправке запроса: ' + result.error);
-      }
-    } catch (error) {
-      alert('Ошибка сети: ' + error.message);
-    }
-  };
-
   return (
     <div className="entry-ban-container">
       <nav className="navbar navbar-expand-lg bg-body-tertiary">
         <div className="container-fluid">
-          <p className="navbar-brand">GranitsaInfo</p>
+          <p className="navbar-brand">Название Компании</p>
           <button
             className="navbar-toggler"
             type="button"
@@ -465,9 +453,13 @@ function Main() {
           <div className="collapse navbar-collapse" id="navbarText">
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <p className="nav-item">
-                <Link className="nav-link active nav-item-p" aria-current="page" to="/">Въезд в РБ и РФ</Link>
+                <Link className="nav-link active nav-item-p" aria-current="page" to="/">Въезд в РФ</Link>
+              </p>
+              <p className="nav-item lili">
+                <Link className="nav-link" to="/belarus">Въезд в Беларусь</Link>
               </p>
             </ul>
+            <span className="navbar-text">8 (800) 350 34 86</span>
           </div>
         </div>
       </nav>
@@ -476,7 +468,7 @@ function Main() {
           <span className="step-text">ШАГ {currentStep} / 3</span>
         </div>
         <h1 className="main-title">
-          <span className="highlight">ПРОВЕРКА ЗАПРЕТА</span> НА ВЪЕЗД В РБ И РФ
+          <span className="highlight">ПРОВЕРКА ЗАПРЕТА</span> НА ВЪЕЗД В РФ
         </h1>
         <p className="description">
           Для проверки запрета или ограничений заполните данные ниже. Отчет будет сформирован из официальных баз данных МВД, ФМС. Формирование
@@ -515,7 +507,6 @@ function Main() {
               stepTwoData={formData.stepTwoData} 
               onBack={handleBack}
               gender={formData.gender}
-              onConfirm={handleConfirm}
             />
           )}
         </form>
@@ -552,6 +543,7 @@ function Main() {
           </div>
         </div>
       )}
+
       <div className="report-wrapper">
         <div className="report-container">
           <div className="report-image">
