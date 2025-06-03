@@ -7,14 +7,12 @@ from datetime import datetime
 import subprocess
 
 app = Flask(__name__)
-# Настройка CORS для фронтенда на GitHub Pages и локальной разработки
 CORS(app, resources={r"/*": {"origins": ["https://khachyerem.github.io", "http://localhost:3000"]}})
 app.secret_key = os.urandom(24)
 
 REQUESTS_FILE = 'requests.json'
 MESSAGES_FILE = 'messages.json'
 
-# Инициализация файлов
 if not os.path.exists(REQUESTS_FILE):
     with open(REQUESTS_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f)
@@ -23,7 +21,6 @@ if not os.path.exists(MESSAGES_FILE):
     with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f)
 
-# Функции чтения/записи
 def read_requests():
     try:
         with open(REQUESTS_FILE, 'r', encoding='utf-8') as f:
@@ -52,7 +49,6 @@ def write_messages(messages):
     except Exception:
         pass
 
-# Маршруты из server.py
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.get_json()
@@ -106,7 +102,7 @@ def submit():
     except Exception as e:
         return jsonify({'error': 'Ошибка: ' + str(e)}), 500
 
-@app.route('/requests', methods=['GET'])
+@app.route('/api/requests', methods=['GET'])
 def get_requests():
     return jsonify(read_requests())
 
@@ -174,7 +170,6 @@ def delete_messages():
     write_messages(messages)
     return jsonify({'message': 'Сообщения удалены'}), 200
 
-# Оригинальные маршруты manager_server.py
 VALID_USERNAME = 'manager'
 VALID_PASSWORD = 'password123'
 
@@ -283,7 +278,7 @@ REQUESTS_TEMPLATE = '''
 
         async function loadRequests() {
             try {
-                const response = await fetch(`${BASE_URL}/requests`);
+                const response = await fetch(`${BASE_URL}/api/requests`);
                 if (!response.ok) throw new Error('Ошибка загрузки запросов');
                 const requests = await response.json();
                 const container = document.getElementById('requests');
